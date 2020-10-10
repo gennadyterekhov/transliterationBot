@@ -119,6 +119,7 @@ func getMe(w http.ResponseWriter, req *http.Request) {
 
 func setWebhook(fullUrl string) string {
 	var urlWithParams string = fmt.Sprintf("setWebhook?url=%s", fullUrl)
+	// тут надо сделать чтобы пост отправлял
 	var response string = telegramApiRequest(urlWithParams)
 	return response
 }
