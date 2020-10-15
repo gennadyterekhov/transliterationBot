@@ -9,10 +9,11 @@ import (
 )
 
 type config struct {
-	Port     int    `json:"port"`
-	APIKey   string `json:"api_key"`
-	Cyrillic string `json:"cyrillic"`
-	Latin    string `json:"latin"`
+	Port       int    `json:"port"`
+	APIKey     string `json:"api_key"`
+	WebhookUrl string `json:"webhook_url"`
+	Cyrillic   string `json:"cyrillic"`
+	Latin      string `json:"latin"`
 }
 
 type getWebhookInfoResponse struct {
@@ -79,6 +80,10 @@ func getApiKeyFromConfig() string {
 
 func getPortFromConfig() int {
 	return getConfig().Port
+}
+
+func getWebhookUrlFromConfig() string {
+	return getConfig().WebhookUrl
 }
 
 func index(w http.ResponseWriter, req *http.Request) {
@@ -241,22 +246,22 @@ func isWebhookSet() bool {
 	return true
 }
 
-func main() {
-	// examples
+func router() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/hello", hello)
 	http.HandleFunc("/headers", headers)
-	//
-	//
 	http.HandleFunc("/webhook", webhook)
 	http.HandleFunc("/getMe", getMe)
+}
+
+func main() {
+	router()
 
 	fmt.Println("[current webhook info]:[\n", getWebhookInfo(), "\n]")
 
-	setWebhook("https://8d5e8d42e305.ngrok.io/webhook")
-	// fmt.Println(getWebhookInfo())
+	setWebhook(getWebhookUrlFromConfig())
 	if !isWebhookSet() {
-		setWebhook("https://8d5e8d42e305.ngrok.io/webhook")
+		setWebhook(getWebhookUrlFromConfig())
 	}
 
 	fmt.Printf("server started on %d\n", getPortFromConfig())
