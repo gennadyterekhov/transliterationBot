@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"transliteration_bot/config"
 	"transliteration_bot/telegramAPI"
 	"transliteration_bot/webhook"
 
@@ -29,7 +28,7 @@ func main() {
 	telegramAPI.SetWebhook(os.Getenv("webhook_url"))
 
 	if !telegramAPI.IsWebhookSet() {
-		telegramAPI.SetWebhook(config.GetConfig().WebhookUrl)
+		telegramAPI.SetWebhook(os.Getenv("webhook_url"))
 	}
 
 	fmt.Printf("server started on %s\n", os.Getenv("port"))

@@ -1,12 +1,14 @@
 package transliterate
 
-import (
-	"transliteration_bot/config"
-)
+import "os"
 
 func Transliterate(msg string) string {
-	var cyrillic string = config.GetConfig().Cyrillic
-	var latin string = config.GetConfig().Latin
+	// local
+	// var cyrillic string = config.GetConfig().Cyrillic
+	// var latin string = config.GetConfig().Latin
+	// prod
+	var cyrillic string = os.Getenv("cyrillic")
+	var latin string = os.Getenv("latin")
 
 	const numberOfChars int = 66
 
