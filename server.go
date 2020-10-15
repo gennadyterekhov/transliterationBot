@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"transliteration_bot/controllers"
 	"transliteration_bot/telegramAPI"
 	"transliteration_bot/webhook"
 
@@ -20,6 +21,7 @@ func init() {
 }
 
 func main() {
+	http.HandleFunc("/", controllers.Index)
 	http.HandleFunc("/webhook", webhook.Webhook)
 	// fmt.Println(os.Getenv("webhook_url"))
 
