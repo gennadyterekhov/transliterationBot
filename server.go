@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 type config struct {
@@ -100,59 +99,108 @@ func headers(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func telegramApiRequest(methodName string) string {
+func telegramApiRequest(methodName string, params string) string {
 	var fullUrl string = fmt.Sprintf("https://api.telegram.org/bot%s/", getApiKeyFromConfig())
-	response, err := http.Get(fullUrl + url.PathEscape(methodName))
-	if err != nil {
-		panic(err)
+	var response *http.Response
+	var err error
+	if params == "" {
+		response, err = http.Get(fullUrl + methodName)
+	} else {
+		response, err = http.Get(fullUrl + methodName + "?" + url.PathEscape(params))
 	}
+	check(err)
 	defer response.Body.Close()
 	body, err := ioutil.ReadAll(response.Body)
 	// fmt.Printf("return from telegramApiRequest: %s\n", string(body))
 	return string(body)
 }
 
+// func telegramApiRequestPost(methodName string) string {
+// 	var fullUrl string = fmt.Sprintf("https://api.telegram.org/bot%s/", getApiKeyFromConfig())
+
+// 	response, err := http.PostForm(
+// 		fullUrl+url.PathEscape(methodName),
+// 		url.Values{"url": {"Value"}},
+// 	)
+
+// 	check(err)
+// 	defer response.Body.Close()
+
+// 	body, err := ioutil.ReadAll(response.Body)
+
+// 	return string(body)
+// }
+
 func getMe(w http.ResponseWriter, req *http.Request) {
-	var response string = telegramApiRequest("getMe")
+	var response string = telegramApiRequest("getMe", "")
 	fmt.Fprintf(w, response)
 }
 
-func setWebhook(fullUrl string) string {
-	var urlWithParams string = fmt.Sprintf("setWebhook?url=%s", fullUrl)
-	// тут надо сделать чтобы пост отправлял
-	var response string = telegramApiRequest(urlWithParams)
-	return response
+func setWebhook(webhookUrl string) string {
+	var fullUrl string = fmt.Sprintf("https://api.telegram.org/bot%s/setWebhook", getApiKeyFromConfig())
+	response, err := http.PostForm(
+		fullUrl,
+		url.Values{"url": {webhookUrl}},
+	)
+
+	check(err)
+	defer response.Body.Close()
+
+	body, err := ioutil.ReadAll(response.Body)
+
+	return string(body)
 }
 
 func sendMessage(chatId int, text string) string {
-	var urlWithParams string = fmt.Sprintf("sendMessage?chat_id=%d&text=%s", chatId, text)
-	var response string = telegramApiRequest(urlWithParams)
+	var params string = fmt.Sprintf("chat_id=%d&text=%s", chatId, text)
+	var response string = telegramApiRequest("sendMessage", params)
 	return response
 }
 
 func transliterate(msg string) string {
 	var cyrillic string = getConfig().Cyrillic
 	var latin string = getConfig().Latin
+
+	const numberOfChars int = 66
+
+	var cyrillicRunes [numberOfChars]rune
+	var latinRunes [numberOfChars]rune
 	var trans string = ""
 
-	for i := 0; i < len(msg); i += 1 {
-		// if msg[i] in cyrillic
-		// trans += latin[cyrillic.indexOf(msg[i])]
-		// else trans += msg[i]
-		var charIndex int = strings.Index(cyrillic, string(msg[i]))
-		if charIndex != -1 {
-			trans += string(latin[charIndex])
+	var correspondence map[rune]rune = make(map[rune]rune)
+
+	var j uint8 = 0
+	for _, runeValue := range cyrillic {
+		cyrillicRunes[j] = runeValue
+		j += 1
+	}
+	j = 0
+	for _, runeValue := range latin {
+		latinRunes[j] = runeValue
+		j += 1
+	}
+
+	for i := 0; i < numberOfChars; i += 1 {
+		correspondence[cyrillicRunes[i]] = latinRunes[i]
+	}
+
+	for _, runeValue := range msg {
+		if latinChar, ok := correspondence[runeValue]; ok {
+			//do something here
+			trans += string(latinChar)
 		} else {
-			trans += string(msg[i])
+			trans += string(runeValue)
 		}
+
 	}
 
 	return trans
+
 }
 
 func getResponseByMessageText(messageText string) string {
 	if messageText == "/start" {
-		return "Hello!\nI'm transliterator bot."
+		return "Hello! I'm transliterator bot."
 	}
 	return transliterate(messageText)
 }
@@ -167,19 +215,17 @@ func webhook(w http.ResponseWriter, req *http.Request) {
 
 	var message messageWebhook = messageWebhook{}
 	message = getMessageObj(string(body))
+
+	fmt.Printf("\n[got message, generating answer]: message.Message.Text is %s\n", message.Message.Text)
 	var response string = getResponseByMessageText(message.Message.Text)
 
+	fmt.Printf("\n[sending message]: response var is %s\n", response)
 	sendMessage(message.Message.From.ID, response)
 
 }
 
-// func getUpdates() string {
-// 	var response string = telegramApiRequest("getUpdates")
-// 	return response
-// }
-
 func getWebhookInfo() string {
-	var response string = telegramApiRequest("getWebhookInfo")
+	var response string = telegramApiRequest("getWebhookInfo", "")
 	return response
 }
 
@@ -205,17 +251,14 @@ func main() {
 	http.HandleFunc("/webhook", webhook)
 	http.HandleFunc("/getMe", getMe)
 
-	fmt.Println(getWebhookInfo())
+	fmt.Println("[current webhook info]:[\n", getWebhookInfo(), "\n]")
 
-	setWebhook("https://85d449ffee77.ngrok.io/webhook")
-	fmt.Println(getWebhookInfo())
+	setWebhook("https://8d5e8d42e305.ngrok.io/webhook")
+	// fmt.Println(getWebhookInfo())
 	if !isWebhookSet() {
-		// setWebhook("")
-		setWebhook("https://85d449ffee77.ngrok.io/webhook")
+		setWebhook("https://8d5e8d42e305.ngrok.io/webhook")
 	}
 
-	// fmt.Println("[webhook info] ", getWebhookInfo())
-	// sendMessage("@gennadyterekhov", "test message")
 	fmt.Printf("server started on %d\n", getPortFromConfig())
 
 	http.ListenAndServe(":"+fmt.Sprint(getPortFromConfig()), nil)
