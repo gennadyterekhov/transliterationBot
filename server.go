@@ -4,8 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
+	"os"
+
+	"github.com/joho/godotenv"
 )
 
 type config struct {
@@ -257,18 +261,26 @@ func router() {
 	http.HandleFunc("/getMe", getMe)
 }
 
+// init is invoked before main()
+func init() {
+	// loads values from .env into the system
+	if err := godotenv.Load(); err != nil {
+		log.Print("No .env file found")
+	}
+}
+
 func main() {
 	router()
 
 	fmt.Println("[current webhook info]:[\n", getWebhookInfo(), "\n]")
-	setWebhook(getWebhookUrlFromConfig())
-	// setWebhook(os.Getenv("webhook_url"))
+	// setWebhook(getWebhookUrlFromConfig())
+	setWebhook(os.Getenv("webhook_url"))
 
 	if !isWebhookSet() {
 		setWebhook(getWebhookUrlFromConfig())
 	}
 
-	fmt.Printf("server started on %d\n", getPortFromConfig())
-	// fmt.Printf("server started on %d\n", os.Getenv("port"))
+	// fmt.Printf("server started on %d\n", getPortFromConfig())
+	fmt.Printf("server started on %s\n", os.Getenv("port"))
 	http.ListenAndServe(":"+fmt.Sprint(getPortFromConfig()), nil)
 }
