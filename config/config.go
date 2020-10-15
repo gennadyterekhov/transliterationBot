@@ -7,7 +7,7 @@ import (
 )
 
 type config struct {
-	Port       int    `json:"port"`
+	Port       int    `json:"PORT"`
 	APIKey     string `json:"api_key"`
 	WebhookUrl string `json:"webhook_url"`
 	Cyrillic   string `json:"cyrillic"`

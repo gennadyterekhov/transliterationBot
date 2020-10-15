@@ -33,6 +33,6 @@ func main() {
 		telegramAPI.SetWebhook(os.Getenv("webhook_url"))
 	}
 
-	fmt.Printf("server started on %s\n", os.Getenv("port"))
-	http.ListenAndServe(":"+os.Getenv("port"), nil)
+	fmt.Printf("server started on %s\n", os.Getenv("PORT"))
+	http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 }

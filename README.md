@@ -4,7 +4,7 @@ for it to work place in .env the following data
 
 
 
-port=  
+PORT=  
 api_key=telegramBotApiAkey  
 webhook_url=  
 cyrillic=АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя  
