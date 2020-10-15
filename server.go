@@ -106,6 +106,8 @@ func headers(w http.ResponseWriter, req *http.Request) {
 
 func telegramApiRequest(methodName string, params string) string {
 	var fullUrl string = fmt.Sprintf("https://api.telegram.org/bot%s/", getApiKeyFromConfig())
+	// var fullUrl string = fmt.Sprintf("https://api.telegram.org/bot%s/", os.Getenv("api_key"))
+
 	var response *http.Response
 	var err error
 	if params == "" {
@@ -143,6 +145,7 @@ func getMe(w http.ResponseWriter, req *http.Request) {
 
 func setWebhook(webhookUrl string) string {
 	var fullUrl string = fmt.Sprintf("https://api.telegram.org/bot%s/setWebhook", getApiKeyFromConfig())
+	// var fullUrl string = fmt.Sprintf("https://api.telegram.org/bot%s/setWebhook", os.Getenv("api_key"))
 	response, err := http.PostForm(
 		fullUrl,
 		url.Values{"url": {webhookUrl}},
@@ -258,13 +261,14 @@ func main() {
 	router()
 
 	fmt.Println("[current webhook info]:[\n", getWebhookInfo(), "\n]")
-
 	setWebhook(getWebhookUrlFromConfig())
+	// setWebhook(os.Getenv("webhook_url"))
+
 	if !isWebhookSet() {
 		setWebhook(getWebhookUrlFromConfig())
 	}
 
 	fmt.Printf("server started on %d\n", getPortFromConfig())
-
+	// fmt.Printf("server started on %d\n", os.Getenv("port"))
 	http.ListenAndServe(":"+fmt.Sprint(getPortFromConfig()), nil)
 }
